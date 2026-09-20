@@ -25,157 +25,142 @@ st.set_page_config(
 
 # =========================================================
 # CSS
-# IMPORTANT: HEADER IS NOT HIDDEN
 # =========================================================
 
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
 
-.stApp {
-    background: #f7f9fc;
-}
+    .stApp {
+        background: #f7f9fc;
+    }
 
-#MainMenu {
-    visibility: hidden;
-}
+    #MainMenu {
+        visibility: hidden;
+    }
 
-footer {
-    visibility: hidden;
-}
+    footer {
+        visibility: hidden;
+    }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background: #0f172a;
-}
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background: #0f172a;
+    }
 
-section[data-testid="stSidebar"] * {
-    color: white;
-}
+    section[data-testid="stSidebar"] * {
+        color: white;
+    }
 
-/* Main */
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-}
+    /* Main */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
 
-/* Hero */
-.hero {
-    background: linear-gradient(135deg, #0f172a, #1e3a8a);
-    padding: 35px;
-    border-radius: 18px;
-    color: white;
-    margin-bottom: 25px;
-}
+    /* Hero */
+    .hero {
+        background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        padding: 35px;
+        border-radius: 18px;
+        color: white;
+        margin-bottom: 25px;
+    }
 
-.hero h1 {
-    font-size: 38px;
-    margin: 0;
-    font-weight: 800;
-}
+    .hero h1 {
+        font-size: 38px;
+        margin: 0;
+        font-weight: 800;
+    }
 
-.hero p {
-    font-size: 16px;
-    color: #dbeafe;
-}
+    .hero p {
+        font-size: 16px;
+        color: #dbeafe;
+    }
 
-/* Cards */
-.card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 15px;
-    padding: 22px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
-}
+    /* Cards */
+    .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 22px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+    }
 
-.card-title {
-    font-size: 19px;
-    font-weight: 700;
-    color: #0f172a;
-}
+    .card-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: #0f172a;
+    }
 
-.card-text {
-    color: #64748b;
-    font-size: 14px;
-    margin-top: 8px;
-}
+    .card-text {
+        color: #64748b;
+        font-size: 14px;
+        margin-top: 8px;
+    }
 
-/* Metrics */
-.metric {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 15px;
-    padding: 22px;
-    text-align: center;
-}
+    /* Metrics */
+    .metric {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 22px;
+        text-align: center;
+    }
 
-.metric-value {
-    font-size: 30px;
-    font-weight: 800;
-    color: #2563eb;
-}
+    .metric-value {
+        font-size: 30px;
+        font-weight: 800;
+        color: #2563eb;
+    }
 
-.metric-label {
-    color: #64748b;
-    margin-top: 5px;
-}
+    .metric-label {
+        color: #64748b;
+        margin-top: 5px;
+    }
 
-/* Section */
-.section-title {
-    font-size: 25px;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 20px;
-}
+    /* Section */
+    .section-title {
+        font-size: 25px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 20px;
+    }
 
-/* Candidate */
-.candidate-name {
-    font-size: 21px;
-    font-weight: 700;
-    color: #0f172a;
-}
+    /* Candidate */
+    .candidate-name {
+        font-size: 21px;
+        font-weight: 700;
+        color: #0f172a;
+    }
 
-.candidate-score {
-    font-size: 28px;
-    font-weight: 800;
-    color: #2563eb;
-}
+    .candidate-score {
+        font-size: 28px;
+        font-weight: 800;
+        color: #2563eb;
+    }
 
-/* Info */
-.info-box {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 12px;
-    padding: 15px;
-    color: #1e40af;
-}
+    /* Chat */
+    .chat-user {
+        background: #dbeafe;
+        padding: 14px;
+        border-radius: 14px;
+        margin: 8px 0;
+    }
 
-.warning-box {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 12px;
-    padding: 15px;
-    color: #92400e;
-}
+    .chat-ai {
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 14px;
+        border-radius: 14px;
+        margin: 8px 0;
+    }
 
-/* Chat */
-.chat-user {
-    background: #dbeafe;
-    padding: 14px;
-    border-radius: 14px;
-    margin: 8px 0;
-}
-
-.chat-ai {
-    background: white;
-    border: 1px solid #e2e8f0;
-    padding: 14px;
-    border-radius: 14px;
-    margin: 8px 0;
-}
-
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # =========================================================
@@ -208,7 +193,7 @@ if "match_results" not in st.session_state:
 
 
 # =========================================================
-# AI / EMBEDDING LOADING
+# EMBEDDINGS
 # =========================================================
 
 @st.cache_resource(show_spinner=False)
@@ -216,10 +201,22 @@ def get_embeddings():
 
     from langchain_community.embeddings import HuggingFaceEmbeddings
 
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        model_kwargs={
+            "device": "cpu"
+        },
+        encode_kwargs={
+            "normalize_embeddings": True
+        }
     )
 
+    return embeddings
+
+
+# =========================================================
+# GEMINI LLM
+# =========================================================
 
 @st.cache_resource(show_spinner=False)
 def get_llm():
@@ -238,34 +235,38 @@ def get_llm():
 
 # =========================================================
 # PDF READER
-# CORRECT IMPORT
 # =========================================================
 
 def extract_pdf(uploaded_file):
 
     from langchain_community.document_loaders import PyPDFLoader
 
-    with tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".pdf"
-    ) as temp:
-
-        temp.write(uploaded_file.getbuffer())
-        temp_path = temp.name
+    temp_path = None
 
     try:
 
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".pdf"
+        ) as temp:
+
+            temp.write(uploaded_file.getbuffer())
+            temp_path = temp.name
+
         loader = PyPDFLoader(temp_path)
+
         pages = loader.load()
 
         return pages
 
     finally:
 
-        try:
-            os.remove(temp_path)
-        except:
-            pass
+        if temp_path:
+
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
 
 
 # =========================================================
@@ -296,9 +297,13 @@ def extract_name(text, filename):
                 word.replace("-", "").replace("'", "").isalpha()
                 for word in words
             ):
+
                 return cleaned
 
-    return Path(filename).stem.replace("_", " ").title()
+    return Path(filename).stem.replace(
+        "_",
+        " "
+    ).title()
 
 
 # =========================================================
@@ -362,26 +367,53 @@ def extract_skills(text):
 
 def process_resumes(files):
 
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_text_splitters import (
+        RecursiveCharacterTextSplitter
+    )
+
     from langchain_community.vectorstores import FAISS
 
     all_pages = []
     resume_texts = {}
     names = []
 
-    for file in files:
+    total_files = len(files)
+
+    # -----------------------------------------------------
+    # STEP 1 - READ PDFs
+    # -----------------------------------------------------
+
+    st.write("### 📄 Reading resumes...")
+
+    pdf_progress = st.progress(0)
+
+    for index, file in enumerate(files):
 
         try:
+
+            st.write(
+                f"📖 Reading **{file.name}**..."
+            )
 
             pages = extract_pdf(file)
 
             if not pages:
+                st.warning(
+                    f"⚠️ No readable pages found in {file.name}"
+                )
                 continue
 
             full_text = "\n".join(
                 page.page_content
                 for page in pages
             )
+
+            if not full_text.strip():
+
+                st.warning(
+                    f"⚠️ No text found in {file.name}"
+                )
+                continue
 
             name = extract_name(
                 full_text,
@@ -396,41 +428,146 @@ def process_resumes(files):
             all_pages.extend(pages)
 
             resume_texts[file.name] = full_text
+
             names.append(name)
+
+            st.success(
+                f"✅ {file.name} — {len(pages)} page(s)"
+            )
 
         except Exception as e:
 
             st.error(
-                f"Error processing {file.name}: {e}"
+                f"❌ Error processing {file.name}: {e}"
             )
 
+        pdf_progress.progress(
+            (index + 1) / total_files
+        )
+
     if not all_pages:
+
+        st.error(
+            "❌ No readable resume content was found."
+        )
+
         return False
+
+    # -----------------------------------------------------
+    # STEP 2 - SPLIT TEXT
+    # -----------------------------------------------------
+
+    st.write("### 🧩 Preparing resume text...")
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
-        chunk_overlap=200
+        chunk_overlap=150,
+        length_function=len
     )
 
     chunks = splitter.split_documents(
         all_pages
     )
 
-    embeddings = get_embeddings()
-
-    vectorstore = FAISS.from_documents(
-        chunks,
-        embeddings
+    st.info(
+        f"📄 Pages: **{len(all_pages)}**  |  "
+        f"🧩 Text chunks: **{len(chunks)}**"
     )
 
+    if not chunks:
+
+        st.error(
+            "❌ Could not create text chunks."
+        )
+
+        return False
+
+    # -----------------------------------------------------
+    # STEP 3 - LOAD EMBEDDING MODEL
+    # -----------------------------------------------------
+
+    st.write("### 🤖 Preparing AI search model...")
+
+    embedding_status = st.empty()
+
+    embedding_status.info(
+        "⏳ Loading the embedding model..."
+    )
+
+    try:
+
+        embeddings = get_embeddings()
+
+        embedding_status.success(
+            "✅ Embedding model ready."
+        )
+
+    except Exception as e:
+
+        embedding_status.error(
+            f"❌ Could not load embedding model: {e}"
+        )
+
+        return False
+
+    # -----------------------------------------------------
+    # STEP 4 - CREATE FAISS DATABASE
+    # -----------------------------------------------------
+
+    st.write("### 🔍 Creating searchable resume database...")
+
+    faiss_status = st.empty()
+
+    faiss_status.info(
+        "⏳ Creating FAISS vector database..."
+    )
+
+    try:
+
+        vectorstore = FAISS.from_documents(
+            chunks,
+            embeddings
+        )
+
+        faiss_status.success(
+            "✅ Search database created."
+        )
+
+    except Exception as e:
+
+        faiss_status.error(
+            f"❌ FAISS creation failed: {e}"
+        )
+
+        return False
+
+    # -----------------------------------------------------
+    # STEP 5 - SAVE RESULTS
+    # -----------------------------------------------------
+
+    st.write("### 💾 Saving processed resume data...")
+
     st.session_state.documents = all_pages
+
     st.session_state.vectorstore = vectorstore
+
     st.session_state.resume_texts = resume_texts
+
     st.session_state.candidate_names = names
-    st.session_state.processed_files = [
-        file.name for file in files
-    ]
+
+    st.session_state.processed_files = list(
+        resume_texts.keys()
+    )
+
     st.session_state.chunks_count = len(chunks)
+
+    # Clear previous job matching results
+    st.session_state.match_results = []
+
+    st.success(
+        f"🎉 Successfully processed "
+        f"{len(resume_texts)} resume(s)!"
+    )
 
     return True
 
@@ -452,15 +589,19 @@ def calculate_match(resume, job):
     for skill in job_skills:
 
         if skill.lower() in resume_lower:
+
             matched.append(skill)
+
         else:
+
             missing.append(skill)
 
     if job_skills:
 
         score = int(
-            len(matched) /
-            len(job_skills) * 100
+            len(matched)
+            / len(job_skills)
+            * 100
         )
 
     else:
@@ -484,17 +625,21 @@ def calculate_match(resume, job):
         )
 
         score = int(
-            len(common) /
-            max(len(job_words), 1) * 100
+            len(common)
+            / max(len(job_words), 1)
+            * 100
         )
 
-        score = min(score, 100)
+        score = min(
+            score,
+            100
+        )
 
     return score, matched, missing
 
 
 # =========================================================
-# AI CHAT
+# AI RESUME CHAT
 # =========================================================
 
 def ask_resume(question):
@@ -503,27 +648,45 @@ def ask_resume(question):
 
         return (
             "GOOGLE_API_KEY is not configured "
-            "in Render Environment Variables."
+            "in the environment variables."
         )
 
     if not st.session_state.vectorstore:
 
-        return "Please upload a resume first."
+        return (
+            "Please upload and process "
+            "a resume first."
+        )
 
     try:
 
         llm = get_llm()
 
+        if llm is None:
+
+            return (
+                "Gemini could not be initialized."
+            )
+
         retriever = (
             st.session_state.vectorstore
             .as_retriever(
-                search_kwargs={"k": 4}
+                search_kwargs={
+                    "k": 4
+                }
             )
         )
 
         documents = retriever.invoke(
             question
         )
+
+        if not documents:
+
+            return (
+                "The requested information "
+                "is not available in the resume."
+            )
 
         context = "\n\n".join(
             doc.page_content
@@ -539,6 +702,8 @@ Use ONLY the resume information provided below.
 If the answer is not present in the resume,
 say that the information is not available.
 
+Do not invent information.
+
 RESUME CONTENT:
 {context}
 
@@ -548,7 +713,9 @@ QUESTION:
 Give a clear and concise answer.
 """
 
-        response = llm.invoke(prompt)
+        response = llm.invoke(
+            prompt
+        )
 
         return response.content
 
@@ -623,6 +790,7 @@ if page == "Dashboard":
         """
         <div class="hero">
             <h1>Resume Intelligence</h1>
+
             <p>
                 Search, rank, compare and understand
                 candidates using Retrieval-Augmented Generation.
@@ -639,12 +807,15 @@ if page == "Dashboard":
         st.markdown(
             f"""
             <div class="metric">
+
                 <div class="metric-value">
                     {len(st.session_state.processed_files)}
                 </div>
+
                 <div class="metric-label">
                     Resumes
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -655,12 +826,15 @@ if page == "Dashboard":
         st.markdown(
             f"""
             <div class="metric">
+
                 <div class="metric-value">
                     {len(st.session_state.candidate_names)}
                 </div>
+
                 <div class="metric-label">
                     Candidates
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -671,12 +845,15 @@ if page == "Dashboard":
         st.markdown(
             f"""
             <div class="metric">
+
                 <div class="metric-value">
                     {st.session_state.chunks_count}
                 </div>
+
                 <div class="metric-label">
                     Text Chunks
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -687,12 +864,15 @@ if page == "Dashboard":
         st.markdown(
             """
             <div class="metric">
+
                 <div class="metric-value">
                     AI
                 </div>
+
                 <div class="metric-label">
                     Gemini Powered
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -707,14 +887,17 @@ if page == "Dashboard":
         st.markdown(
             """
             <div class="card">
+
                 <div class="card-title">
                     📄 Resume Analysis
                 </div>
+
                 <div class="card-text">
                     Upload PDF resumes and convert them into
                     searchable knowledge using embeddings
                     and FAISS vector search.
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -725,13 +908,16 @@ if page == "Dashboard":
         st.markdown(
             """
             <div class="card">
+
                 <div class="card-title">
                     🤖 AI Resume Chat
                 </div>
+
                 <div class="card-text">
                     Ask natural-language questions about
                     uploaded resumes using RAG.
                 </div>
+
             </div>
             """,
             unsafe_allow_html=True
@@ -740,7 +926,7 @@ if page == "Dashboard":
     if not GOOGLE_API_KEY:
 
         st.warning(
-            "GOOGLE_API_KEY is not configured in Render."
+            "⚠️ GOOGLE_API_KEY is not configured."
         )
 
 
@@ -758,13 +944,16 @@ elif page == "Upload Resumes":
     st.markdown(
         """
         <div class="card">
+
             <div class="card-title">
                 Upload Candidate Resumes
             </div>
+
             <div class="card-text">
                 Select one or more PDF resumes and click
                 Process Resumes.
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
@@ -779,7 +968,7 @@ elif page == "Upload Resumes":
     if uploaded_files:
 
         st.write(
-            f"Selected {len(uploaded_files)} file(s)"
+            f"Selected **{len(uploaded_files)}** file(s)"
         )
 
         for file in uploaded_files:
@@ -794,21 +983,42 @@ elif page == "Upload Resumes":
             use_container_width=True
         ):
 
-            with st.spinner(
-                "Processing resumes..."
-            ):
+            with st.status(
+                "🚀 Processing resumes...",
+                expanded=True
+            ) as status:
 
                 success = process_resumes(
                     uploaded_files
                 )
 
+                if success:
+
+                    status.update(
+                        label="✅ Resume processing completed!",
+                        state="complete",
+                        expanded=False
+                    )
+
+                else:
+
+                    status.update(
+                        label="❌ Resume processing failed.",
+                        state="error",
+                        expanded=True
+                    )
+
             if success:
 
+                st.balloons()
+
                 st.success(
-                    "Resumes processed successfully!"
+                    "🎉 Resumes are ready to search!"
                 )
 
-                st.rerun()
+    # -----------------------------------------------------
+    # LOADED RESUMES
+    # -----------------------------------------------------
 
     if st.session_state.processed_files:
 
@@ -888,38 +1098,44 @@ elif page == "Job Match":
 
             else:
 
-                results = []
-
-                for filename, resume in (
-                    st.session_state.resume_texts.items()
+                with st.spinner(
+                    "Analyzing resumes..."
                 ):
 
-                    score, matched, missing = (
-                        calculate_match(
-                            resume,
-                            job_description
+                    results = []
+
+                    for filename, resume in (
+                        st.session_state.resume_texts.items()
+                    ):
+
+                        score, matched, missing = (
+                            calculate_match(
+                                resume,
+                                job_description
+                            )
                         )
+
+                        name = extract_name(
+                            resume,
+                            filename
+                        )
+
+                        results.append(
+                            {
+                                "name": name,
+                                "filename": filename,
+                                "score": score,
+                                "matched": matched,
+                                "missing": missing
+                            }
+                        )
+
+                    results.sort(
+                        key=lambda x: x["score"],
+                        reverse=True
                     )
 
-                    name = extract_name(
-                        resume,
-                        filename
-                    )
-
-                    results.append({
-                        "name": name,
-                        "filename": filename,
-                        "score": score,
-                        "matched": matched,
-                        "missing": missing
-                    })
-
-                results.sort(
-                    key=lambda x: x["score"],
-                    reverse=True
-                )
-
-                st.session_state.match_results = results
+                    st.session_state.match_results = results
 
         for result in st.session_state.match_results:
 
@@ -937,16 +1153,20 @@ elif page == "Job Match":
 
                     <p>
                         <b>Matched skills:</b>
-                        {", ".join(result["matched"])
-                        if result["matched"]
-                        else "None"}
+                        {
+                            ", ".join(result["matched"])
+                            if result["matched"]
+                            else "None"
+                        }
                     </p>
 
                     <p>
                         <b>Missing skills:</b>
-                        {", ".join(result["missing"])
-                        if result["missing"]
-                        else "None"}
+                        {
+                            ", ".join(result["missing"])
+                            if result["missing"]
+                            else "None"
+                        }
                     </p>
 
                 </div>
@@ -1003,12 +1223,14 @@ elif page == "Compare Candidates":
                     text
                 )
 
-                data.append({
-                    "Candidate": name,
-                    "Resume": filename,
-                    "Skill Count": len(skills),
-                    "Skills": ", ".join(skills)
-                })
+                data.append(
+                    {
+                        "Candidate": name,
+                        "Resume": filename,
+                        "Skill Count": len(skills),
+                        "Skills": ", ".join(skills)
+                    }
+                )
 
             st.dataframe(
                 data,
@@ -1043,8 +1265,11 @@ elif page == "AI Resume Chat":
                 st.markdown(
                     f"""
                     <div class="chat-user">
+
                         <b>You</b><br>
+
                         {message["content"]}
+
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -1055,8 +1280,11 @@ elif page == "AI Resume Chat":
                 st.markdown(
                     f"""
                     <div class="chat-ai">
+
                         <b>ResumeAI</b><br>
+
                         {message["content"]}
+
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -1068,23 +1296,27 @@ elif page == "AI Resume Chat":
 
         if question:
 
-            st.session_state.chat_history.append({
-                "role": "user",
-                "content": question
-            })
+            st.session_state.chat_history.append(
+                {
+                    "role": "user",
+                    "content": question
+                }
+            )
 
             with st.spinner(
-                "Searching resume and generating answer..."
+                "🔍 Searching resume and generating answer..."
             ):
 
                 answer = ask_resume(
                     question
                 )
 
-            st.session_state.chat_history.append({
-                "role": "assistant",
-                "content": answer
-            })
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": answer
+                }
+            )
 
             st.rerun()
 
