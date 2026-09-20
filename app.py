@@ -1,244 +1,290 @@
-
 import os
 import re
+import json
 import tempfile
+import textwrap
 from pathlib import Path
 
 import streamlit as st
 from dotenv import load_dotenv
 
-from langchain_community.aders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_classic.chains import RetrievalQA
 
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-# =========================================================
-# CONFIG
-# =========================================================
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 st.set_page_config(
-    page_title="ResumeAI | Intelligent Recruitment",
-    page_icon="✦",
+    page_title="ResumeAI",
+    page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
-# =========================================================
-# PROFESSIONAL UI
-# =========================================================
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+# ============================================================
+# CUSTOM CSS
+# ============================================================
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+st.markdown(
+    textwrap.dedent(
+        """
+        <style>
 
-.stApp {
-    background: #f6f8fc;
-}
+        /* Main background */
+        .stApp {
+            background: #f7f9fc;
+        }
 
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-    max-width: 1450px;
-}
+        /* Hide Streamlit branding */
+        #MainMenu {
+            visibility: hidden;
+        }
 
-[data-testid="stSidebar"] {
-    background: #101828;
-}
+        footer {
+            visibility: hidden;
+        }
 
-[data-testid="stSidebar"] * {
-    color: #e6eaf0;
-}
+        header {
+            visibility: hidden;
+        }
 
-.brand {
-    font-size: 26px;
-    font-weight: 800;
-    margin-bottom: 5px;
-}
+        /* Main content */
+        .main .block-container {
+            padding-top: 2rem;
+            padding-bottom: 3rem;
+            max-width: 1400px;
+        }
 
-.brand-sub {
-    color: #98a2b3 !important;
-    font-size: 12px;
-    margin-bottom: 30px;
-}
+        /* Sidebar */
+        section[data-testid="stSidebar"] {
+            background: #0f172a;
+        }
 
-.hero {
-    background: linear-gradient(135deg, #101828 0%, #1d2939 100%);
-    padding: 34px;
-    border-radius: 24px;
-    color: white;
-    margin-bottom: 25px;
-}
+        section[data-testid="stSidebar"] * {
+            color: white;
+        }
 
-.hero h1 {
-    font-size: 38px;
-    margin: 0 0 8px 0;
-    font-weight: 800;
-}
+        /* Logo */
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
 
-.hero p {
-    color: #cbd5e1;
-    margin: 0;
-    font-size: 15px;
-}
+        .logo-subtitle {
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
 
-.card {
-    background: white;
-    border: 1px solid #e4e7ec;
-    border-radius: 18px;
-    padding: 22px;
-    margin-bottom: 18px;
-    box-shadow: 0 3px 14px rgba(16,24,40,0.04);
-}
+        /* Hero */
+        .hero {
+            background: linear-gradient(
+                135deg,
+                #0f172a 0%,
+                #1e3a8a 100%
+            );
+            padding: 35px;
+            border-radius: 18px;
+            color: white;
+            margin-bottom: 25px;
+        }
 
-.card-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #101828;
-    margin-bottom: 4px;
-}
+        .hero h1 {
+            font-size: 38px;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
 
-.card-sub {
-    color: #667085;
-    font-size: 13px;
-    margin-bottom: 16px;
-}
+        .hero p {
+            font-size: 16px;
+            color: #dbeafe;
+            margin: 0;
+        }
 
-.metric {
-    background: white;
-    border: 1px solid #e4e7ec;
-    border-radius: 16px;
-    padding: 20px;
-}
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
 
-.metric-label {
-    color: #667085;
-    font-size: 12px;
-    font-weight: 600;
-}
+        .card-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
 
-.metric-value {
-    color: #101828;
-    font-size: 28px;
-    font-weight: 800;
-    margin-top: 4px;
-}
+        .card-text {
+            color: #64748b;
+            font-size: 14px;
+        }
 
-.candidate {
-    background: white;
-    border: 1px solid #e4e7ec;
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 15px;
-}
+        /* Metric cards */
+        .metric {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
 
-.candidate-name {
-    font-size: 19px;
-    font-weight: 800;
-    color: #101828;
-}
+        .metric-value {
+            font-size: 30px;
+            font-weight: 800;
+            color: #1d4ed8;
+        }
 
-.score {
-    font-size: 30px;
-    font-weight: 800;
-}
+        .metric-label {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 5px;
+        }
 
-.skill {
-    display: inline-block;
-    background: #eef4ff;
-    color: #344054;
-    border: 1px solid #dbe7ff;
-    border-radius: 20px;
-    padding: 5px 10px;
-    margin: 3px;
-    font-size: 12px;
-}
+        /* Section title */
+        .section-title {
+            font-size: 25px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 10px 0 18px 0;
+        }
 
-.good {
-    color: #027a48;
-    font-weight: 700;
-}
+        /* Candidate */
+        .candidate-name {
+            font-size: 21px;
+            font-weight: 700;
+            color: #0f172a;
+        }
 
-.missing {
-    color: #b42318;
-    font-weight: 700;
-}
+        .candidate-score {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+        }
 
-.info-box {
-    background: #f8fafc;
-    border-left: 4px solid #667085;
-    border-radius: 10px;
-    padding: 14px;
-    margin: 10px 0;
-    color: #344054;
-    font-size: 13px;
-}
+        /* Info box */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 15px;
+            color: #1e40af;
+            margin: 12px 0;
+        }
 
-.small {
-    color: #667085;
-    font-size: 12px;
-}
+        /* Success */
+        .success-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 15px;
+            color: #166534;
+        }
 
-div.stButton > button {
-    border-radius: 10px;
-    font-weight: 600;
-}
+        /* Warning */
+        .warning-box {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            padding: 15px;
+            color: #92400e;
+        }
 
-.footer {
-    text-align: center;
-    color: #98a2b3;
-    font-size: 12px;
-    padding: 30px 0 5px 0;
-}
-</style>
-""", unsafe_allow_html=True)
+        /* Chat */
+        .chat-user {
+            background: #dbeafe;
+            padding: 13px 16px;
+            border-radius: 15px;
+            margin: 8px 0;
+            color: #1e3a8a;
+        }
+
+        .chat-ai {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 15px 16px;
+            border-radius: 15px;
+            margin: 8px 0;
+            color: #334155;
+        }
+
+        /* Buttons */
+        .stButton > button {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* File uploader */
+        section[data-testid="stFileUploader"] {
+            background: white;
+            border-radius: 12px;
+        }
+
+        </style>
+        """
+    ),
+    unsafe_allow_html=True,
+)
 
 
-# =========================================================
+# ============================================================
 # SESSION STATE
-# =========================================================
+# ============================================================
+
 if "documents" not in st.session_state:
     st.session_state.documents = []
 
-if "chunks" not in st.session_state:
-    st.session_state.chunks = []
+if "vectorstore" not in st.session_state:
+    st.session_state.vectorstore = None
 
-if "vector_db" not in st.session_state:
-    st.session_state.vector_db = None
+if "resume_texts" not in st.session_state:
+    st.session_state.resume_texts = {}
 
-if "qa_chain" not in st.session_state:
-    st.session_state.qa_chain = None
+if "candidate_names" not in st.session_state:
+    st.session_state.candidate_names = []
 
-if "candidate_data" not in st.session_state:
-    st.session_state.candidate_data = {}
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = []
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 if "job_description" not in st.session_state:
     st.session_state.job_description = ""
 
-
-# =========================================================
-# HELPERS
-# =========================================================
-def clean_name(filename):
-    name = Path(filename).stem
-    name = re.sub(r"[_\-]+", " ", name)
-    name = re.sub(r"\s+", " ", name).strip()
-    return name.title()
+if "chunks_count" not in st.session_state:
+    st.session_state.chunks_count = 0
 
 
+# ============================================================
+# LAZY LOADING FUNCTIONS
+# ============================================================
+
+@st.cache_resource(show_spinner=False)
+def get_embeddings():
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+
+@st.cache_resource(show_spinner=False)
 def get_llm():
     if not GOOGLE_API_KEY:
-        st.error("GOOGLE_API_KEY is missing. Add it to your .env file.")
-        st.stop()
+        return None
+
+    from langchain_google_genai import ChatGoogleGenerativeAI
 
     return ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
@@ -247,131 +293,396 @@ def get_llm():
     )
 
 
-def extract_candidate_profile(llm, candidate_name, text):
-    prompt = f"""
-You are an HR resume analysis assistant.
+# ============================================================
+# PDF PROCESSING
+# ============================================================
 
-Analyze this resume for candidate: {candidate_name}
+def extract_text_from_pdf(uploaded_file):
+    """
+    Extract text from a PDF using PyPDFLoader.
+    """
 
-Return ONLY valid JSON with these keys:
-{{
-  "name": "candidate name if found, otherwise {candidate_name}",
-  "skills": ["skill1", "skill2"],
-  "education": ["education item"],
-  "experience": ["experience item"],
-  "strengths": ["strength1", "strength2", "strength3"],
-  "summary": "short professional summary"
-}}
+    # Correct import
+    from langchain_community.document_loaders import PyPDFLoader
 
-Do not invent information.
-Use only information present in the resume.
+    suffix = Path(uploaded_file.name).suffix
 
-RESUME:
-{text[:12000]}
-"""
+    with tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=suffix
+    ) as temp_file:
+
+        temp_file.write(uploaded_file.getbuffer())
+        temp_path = temp_file.name
+
     try:
-        response = llm.invoke(prompt)
-        raw = response.content
+        loader = PyPDFLoader(temp_path)
+        pages = loader.load()
 
-        # Extract JSON object from model response
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if not match:
-            return {
-                "name": candidate_name,
-                "skills": [],
-                "education": [],
-                "experience": [],
-                "strengths": [],
-                "summary": "Profile could not be structured."
-            }
+        return pages
 
-        import json
-        return json.loads(match.group())
-    except Exception:
+    finally:
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass
+
+
+def process_resumes(uploaded_files):
+    """
+    Process uploaded PDF resumes and create FAISS vector database.
+    """
+
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores import FAISS
+
+    all_documents = []
+    resume_texts = {}
+    candidate_names = []
+
+    for uploaded_file in uploaded_files:
+
+        try:
+
+            pages = extract_text_from_pdf(uploaded_file)
+
+            if not pages:
+                continue
+
+            # Store full text
+            full_text = "\n".join(
+                page.page_content
+                for page in pages
+            )
+
+            resume_texts[uploaded_file.name] = full_text
+
+            # Candidate name
+            candidate_name = extract_candidate_name(
+                full_text,
+                uploaded_file.name
+            )
+
+            candidate_names.append(candidate_name)
+
+            # Add metadata
+            for page in pages:
+                page.metadata["source"] = uploaded_file.name
+                page.metadata["candidate"] = candidate_name
+
+            all_documents.extend(pages)
+
+        except Exception as e:
+            st.error(
+                f"Could not process {uploaded_file.name}: {e}"
+            )
+
+    if not all_documents:
+        return False
+
+    # Split documents
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
+    )
+
+    chunks = splitter.split_documents(all_documents)
+
+    # Create embeddings
+    embeddings = get_embeddings()
+
+    # Create FAISS database
+    vectorstore = FAISS.from_documents(
+        chunks,
+        embeddings
+    )
+
+    st.session_state.documents = all_documents
+    st.session_state.vectorstore = vectorstore
+    st.session_state.resume_texts = resume_texts
+    st.session_state.candidate_names = candidate_names
+    st.session_state.processed_files = [
+        file.name for file in uploaded_files
+    ]
+    st.session_state.chunks_count = len(chunks)
+
+    return True
+
+
+# ============================================================
+# NAME EXTRACTION
+# ============================================================
+
+def extract_candidate_name(text, filename):
+
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
+
+    # Try first few lines
+    for line in lines[:10]:
+
+        clean_line = re.sub(
+            r"[^A-Za-z .'-]",
+            "",
+            line
+        ).strip()
+
+        words = clean_line.split()
+
+        if 2 <= len(words) <= 5:
+            if all(
+                word.replace("-", "").replace("'", "").isalpha()
+                for word in words
+            ):
+                return clean_line
+
+    # Fallback filename
+    name = Path(filename).stem
+
+    name = re.sub(
+        r"[_\-]+",
+        " ",
+        name
+    )
+
+    return name.title()
+
+
+# ============================================================
+# KEYWORD EXTRACTION
+# ============================================================
+
+def extract_skills(text):
+
+    common_skills = [
+        "python",
+        "java",
+        "c",
+        "c++",
+        "c#",
+        "javascript",
+        "typescript",
+        "html",
+        "css",
+        "react",
+        "angular",
+        "node.js",
+        "node",
+        "express",
+        "spring",
+        "spring boot",
+        "sql",
+        "mysql",
+        "mongodb",
+        "postgresql",
+        "oracle",
+        "git",
+        "github",
+        "docker",
+        "kubernetes",
+        "aws",
+        "azure",
+        "gcp",
+        "machine learning",
+        "deep learning",
+        "artificial intelligence",
+        "ai",
+        "generative ai",
+        "genai",
+        "llm",
+        "langchain",
+        "rag",
+        "faiss",
+        "streamlit",
+        "pandas",
+        "numpy",
+        "tensorflow",
+        "pytorch",
+        "power bi",
+        "excel",
+        "figma",
+        "ui/ux",
+        "data analytics",
+        "data analysis",
+        "communication",
+        "leadership",
+    ]
+
+    text_lower = text.lower()
+
+    found = []
+
+    for skill in common_skills:
+
+        if skill.lower() in text_lower:
+            found.append(skill)
+
+    return sorted(set(found))
+
+
+# ============================================================
+# JOB MATCHING
+# ============================================================
+
+def calculate_match(resume_text, job_description):
+
+    resume_lower = resume_text.lower()
+    job_lower = job_description.lower()
+
+    skills = extract_skills(job_description)
+
+    if not skills:
+
+        # General keyword matching
+        job_words = set(
+            re.findall(
+                r"\b[a-zA-Z][a-zA-Z+#.-]{2,}\b",
+                job_lower
+            )
+        )
+
+        resume_words = set(
+            re.findall(
+                r"\b[a-zA-Z][a-zA-Z+#.-]{2,}\b",
+                resume_lower
+            )
+        )
+
+        matched = job_words.intersection(resume_words)
+
+        score = min(
+            100,
+            int(
+                len(matched) /
+                max(len(job_words), 1)
+                * 100
+            )
+        )
+
         return {
-            "name": candidate_name,
-            "skills": [],
-            "education": [],
-            "experience": [],
-            "strengths": [],
-            "summary": "Profile analysis unavailable."
+            "score": score,
+            "matched": list(matched),
+            "missing": [],
         }
 
+    matched = []
+    missing = []
 
-def analyze_match(llm, candidate_name, resume_text, job_description):
-    prompt = f"""
-You are an explainable recruitment assistant.
+    for skill in skills:
 
-Compare the candidate resume with the job description.
+        if skill.lower() in resume_lower:
+            matched.append(skill)
+        else:
+            missing.append(skill)
 
-Return ONLY valid JSON:
-{{
-  "score": 0,
-  "matched_skills": ["skill"],
-  "missing_skills": ["skill"],
-  "strengths": ["reason"],
-  "gaps": ["reason"],
-  "recommendation": "Strong Match / Good Match / Partial Match / Low Match",
-  "explanation": "short explanation"
-}}
+    score = int(
+        len(matched) /
+        max(len(skills), 1)
+        * 100
+    )
 
-Rules:
-- score must be an integer from 0 to 100.
-- Base the score ONLY on the provided resume and job description.
-- Do not invent experience, education, certifications, or skills.
-- This is an AI-assisted recommendation, not a hiring decision.
+    return {
+        "score": score,
+        "matched": matched,
+        "missing": missing,
+    }
 
-CANDIDATE:
-{candidate_name}
 
-RESUME:
-{resume_text[:12000]}
+# ============================================================
+# GEMINI ANSWER
+# ============================================================
 
-JOB DESCRIPTION:
-{job_description[:8000]}
-"""
+def ask_gemini(prompt):
+
+    llm = get_llm()
+
+    if llm is None:
+
+        return (
+            "Google API key is not configured. "
+            "Please add GOOGLE_API_KEY in Render Environment Variables."
+        )
+
     try:
+
         response = llm.invoke(prompt)
-        raw = response.content
 
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if not match:
-            return None
+        return response.content
 
-        import json
-        data = json.loads(match.group())
-        data["score"] = max(0, min(100, int(data.get("score", 0))))
-        return data
-    except Exception:
-        return None
+    except Exception as e:
+
+        return f"AI error: {str(e)}"
 
 
-def candidate_text(candidate_name):
-    parts = []
-    for doc in st.session_state.documents:
-        source = str(doc.metadata.get("source", ""))
-        if Path(source).stem.lower() == candidate_name.lower():
-            parts.append(doc.page_content)
+# ============================================================
+# RAG QUESTION
+# ============================================================
 
-    # fallback: match cleaned filename
-    if not parts:
-        for doc in st.session_state.documents:
-            source_name = clean_name(Path(str(doc.metadata.get("source", ""))).name)
-            if source_name.lower() == candidate_name.lower():
-                parts.append(doc.page_content)
+def ask_resume_question(question):
 
-    return "\n".join(parts)
+    if st.session_state.vectorstore is None:
+
+        return (
+            "Please upload and process at least one resume first."
+        )
+
+    try:
+
+        from langchain_classic.chains import RetrievalQA
+
+        llm = get_llm()
+
+        if llm is None:
+
+            return (
+                "Google API key is not configured."
+            )
+
+        retriever = (
+            st.session_state.vectorstore
+            .as_retriever(
+                search_kwargs={"k": 3}
+            )
+        )
+
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            retriever=retriever,
+            chain_type="stuff",
+            return_source_documents=True,
+        )
+
+        result = qa_chain.invoke(
+            {"query": question}
+        )
+
+        return result["result"]
+
+    except Exception as e:
+
+        return f"Unable to answer the question: {str(e)}"
 
 
-# =========================================================
+# ============================================================
 # SIDEBAR
-# =========================================================
+# ============================================================
+
 with st.sidebar:
-    st.markdown('<div class="brand">✦ ResumeAI</div>', unsafe_allow_html=True)
+
     st.markdown(
-        '<div class="brand-sub">AI-powered recruitment intelligence</div>',
+        """
+        <div class="logo">ResumeAI</div>
+        <div class="logo-subtitle">
+            Intelligent Resume Analysis Platform
+        </div>
+        """,
         unsafe_allow_html=True
     )
+
+    st.markdown("---")
 
     page = st.radio(
         "WORKSPACE",
@@ -382,472 +693,682 @@ with st.sidebar:
             "Compare Candidates",
             "AI Resume Chat",
         ],
-        label_visibility="visible"
+        label_visibility="visible",
     )
 
     st.markdown("---")
-    st.markdown("### AI Workflow")
-    st.markdown("① Upload resumes")
-    st.markdown("② Add job description")
-    st.markdown("③ Analyze candidates")
-    st.markdown("④ Compare & rank")
-    st.markdown("⑤ Ask your resumes")
+
+    st.markdown(
+        """
+        <div style="font-size:13px;color:#cbd5e1;">
+        <b>Technology</b><br><br>
+        • Python<br>
+        • Streamlit<br>
+        • LangChain<br>
+        • Gemini AI<br>
+        • FAISS<br>
+        • HuggingFace
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown("---")
-    st.caption("ResumeAI • RAG + Gemini")
+
+    if st.session_state.processed_files:
+
+        st.success(
+            f"{len(st.session_state.processed_files)} "
+            f"resume(s) loaded"
+        )
+
+    else:
+
+        st.info(
+            "Upload resumes to begin."
+        )
 
 
-# =========================================================
-# HEADER
-# =========================================================
-st.markdown("""
-<div class="hero">
-    <h1>Resume Intelligence</h1>
-    <p>Search, rank, compare and understand candidates using Retrieval-Augmented Generation.</p>
-</div>
-""", unsafe_allow_html=True)
-
-
-# =========================================================
+# ============================================================
 # DASHBOARD
-# =========================================================
+# ============================================================
+
 if page == "Dashboard":
 
+    st.markdown(
+        """
+        <div class="hero">
+            <h1>Resume Intelligence</h1>
+            <p>
+                Search, rank, compare and understand candidates
+                using Retrieval-Augmented Generation.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Metrics
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown(
-            f'<div class="metric"><div class="metric-label">RESUMES</div>'
-            f'<div class="metric-value">{len(st.session_state.candidate_data)}</div></div>',
+            f"""
+            <div class="metric">
+                <div class="metric-value">
+                    {len(st.session_state.processed_files)}
+                </div>
+                <div class="metric-label">
+                    Resumes
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     with col2:
         st.markdown(
-            f'<div class="metric"><div class="metric-label">PDF PAGES</div>'
-            f'<div class="metric-value">{len(st.session_state.documents)}</div></div>',
+            f"""
+            <div class="metric">
+                <div class="metric-value">
+                    {len(st.session_state.candidate_names)}
+                </div>
+                <div class="metric-label">
+                    Candidates
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     with col3:
         st.markdown(
-            f'<div class="metric"><div class="metric-label">TEXT CHUNKS</div>'
-            f'<div class="metric-value">{len(st.session_state.chunks)}</div></div>',
+            f"""
+            <div class="metric">
+                <div class="metric-value">
+                    {st.session_state.chunks_count}
+                </div>
+                <div class="metric-label">
+                    Text Chunks
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     with col4:
-        scores = [
-            x.get("match", {}).get("score")
-            for x in st.session_state.candidate_data.values()
-            if x.get("match")
-        ]
-        avg = round(sum(scores) / len(scores)) if scores else 0
-
         st.markdown(
-            f'<div class="metric"><div class="metric-label">AVG MATCH</div>'
-            f'<div class="metric-value">{avg}%</div></div>',
+            """
+            <div class="metric">
+                <div class="metric-value">
+                    AI
+                </div>
+                <div class="metric-label">
+                    Gemini Powered
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        "<br>",
+        unsafe_allow_html=True
+    )
 
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">Recruitment Command Center</div>
-        <div class="card-sub">
-            Your AI workspace for resume screening and candidate intelligence.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Introduction
+    col1, col2 = st.columns(2)
 
-    if not st.session_state.candidate_data:
-        st.info("Start by opening **Upload Resumes** and uploading one or more PDF resumes.")
-    else:
-        ranked = sorted(
-            st.session_state.candidate_data.items(),
-            key=lambda x: x[1].get("match", {}).get("score", 0),
-            reverse=True
+    with col1:
+
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    📄 Resume Analysis
+                </div>
+                <div class="card-text">
+                    Upload multiple PDF resumes and convert
+                    them into searchable knowledge using
+                    embeddings and FAISS vector search.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.subheader("Top Candidates")
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    🎯 Job Matching
+                </div>
+                <div class="card-text">
+                    Compare resumes against a job description
+                    and identify matched and missing skills.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        for rank, (name, data) in enumerate(ranked[:5], 1):
-            score = data.get("match", {}).get("score", 0)
+    with col2:
 
-            c1, c2 = st.columns([5, 1])
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    🤖 AI Resume Chat
+                </div>
+                <div class="card-text">
+                    Ask natural-language questions about
+                    uploaded resumes using Retrieval-Augmented
+                    Generation.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-            with c1:
-                st.markdown(
-                    f'<div class="candidate">'
-                    f'<div class="candidate-name">#{rank} &nbsp; {name}</div>'
-                    f'<div class="small">{data.get("profile", {}).get("summary", "")}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    📊 Candidate Comparison
+                </div>
+                <div class="card-text">
+                    Compare candidate profiles, skills and
+                    job-match scores in one workspace.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-            with c2:
-                st.markdown(
-                    f'<div class="candidate"><div class="score">{score}%</div>'
-                    f'<div class="small">AI Match</div></div>',
-                    unsafe_allow_html=True
-                )
+    if not GOOGLE_API_KEY:
+
+        st.markdown(
+            """
+            <div class="warning-box">
+                ⚠️ GOOGLE_API_KEY is not configured.
+                Add it in Render → Environment Variables
+                before using Gemini AI features.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
-# =========================================================
+# ============================================================
 # UPLOAD RESUMES
-# =========================================================
+# ============================================================
+
 elif page == "Upload Resumes":
 
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">Upload Candidate Resumes</div>
-        <div class="card-sub">
-            Upload multiple PDF resumes. ResumeAI will create embeddings and candidate profiles.
+    st.markdown(
+        '<div class="section-title">Upload Resumes</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="card">
+            <div class="card-title">
+                📄 Add Candidate Resumes
+            </div>
+            <div class="card-text">
+                Upload one or multiple PDF resumes.
+                ResumeAI will extract the content, split it
+                into chunks and create a searchable FAISS index.
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
     uploaded_files = st.file_uploader(
-        "Choose resume PDFs",
+        "Choose PDF resumes",
         type=["pdf"],
-        accept_multiple_files=True
+        accept_multiple_files=True,
+        help="Upload one or more PDF resumes."
     )
 
     if uploaded_files:
-        if st.button("⚡ Process Resumes", use_container_width=True):
 
-            documents = []
-            candidate_data = {}
-
-            with st.spinner("Reading resumes and building AI knowledge base..."):
-
-                for uploaded in uploaded_files:
-                    with tempfile.NamedTemporaryFile(
-                        delete=False,
-                        suffix=".pdf"
-                    ) as tmp:
-                        tmp.write(uploaded.getbuffer())
-                        temp_path = tmp.name
-
-                    try:
-                        loader = PyPDFLoader(temp_path)
-                        docs = loader.load()
-
-                        for doc in docs:
-                            doc.metadata["source"] = uploaded.name
-
-                        documents.extend(docs)
-                    finally:
-                        try:
-                            os.remove(temp_path)
-                        except OSError:
-                            pass
-
-                splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=1000,
-                    chunk_overlap=200
-                )
-
-                chunks = splitter.split_documents(documents)
-
-                embeddings = HuggingFaceEmbeddings(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2"
-                )
-
-                vector_db = FAISS.from_documents(chunks, embeddings)
-
-                retriever = vector_db.as_retriever(
-                    search_kwargs={"k": 4}
-                )
-
-                llm = get_llm()
-
-                qa_chain = RetrievalQA.from_chain_type(
-                    llm=llm,
-                    retriever=retriever
-                )
-
-                # Build one structured profile per resume
-                grouped = {}
-                for doc in documents:
-                    source = Path(str(doc.metadata.get("source", "resume.pdf"))).name
-                    grouped.setdefault(source, []).append(doc.page_content)
-
-                for source, pages in grouped.items():
-                    name = clean_name(source)
-                    full_text = "\n".join(pages)
-                    profile = extract_candidate_profile(llm, name, full_text)
-
-                    candidate_data[name] = {
-                        "profile": profile,
-                        "resume_text": full_text,
-                        "match": None,
-                    }
-
-                st.session_state.documents = documents
-                st.session_state.chunks = chunks
-                st.session_state.vector_db = vector_db
-                st.session_state.qa_chain = qa_chain
-                st.session_state.candidate_data = candidate_data
-
-            st.success(
-                f"Successfully processed {len(candidate_data)} candidate resume(s)."
-            )
-
-            st.rerun()
-
-
-# =========================================================
-# JOB MATCH
-# =========================================================
-elif page == "Job Match":
-
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">🎯 AI Job Matching</div>
-        <div class="card-sub">
-            Paste a job description and let AI score every uploaded candidate.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if not st.session_state.candidate_data:
-        st.warning("Upload resumes first.")
-    else:
-
-        jd = st.text_area(
-            "Job Description",
-            value=st.session_state.job_description,
-            height=230,
-            placeholder="Paste the complete job description here..."
+        st.write(
+            f"**{len(uploaded_files)} file(s) selected**"
         )
 
-        st.session_state.job_description = jd
+        for file in uploaded_files:
 
-        if st.button("🚀 Analyze Candidate Matches", use_container_width=True):
-
-            if not jd.strip():
-                st.warning("Please enter a job description.")
-            else:
-                llm = get_llm()
-
-                progress = st.progress(0)
-                total = len(st.session_state.candidate_data)
-
-                for i, (name, data) in enumerate(
-                    st.session_state.candidate_data.items()
-                ):
-                    result = analyze_match(
-                        llm,
-                        name,
-                        data["resume_text"],
-                        jd
-                    )
-
-                    st.session_state.candidate_data[name]["match"] = result
-                    progress.progress((i + 1) / total)
-
-                st.success("Candidate matching completed.")
-                st.rerun()
-
-        matches = [
-            (name, data)
-            for name, data in st.session_state.candidate_data.items()
-            if data.get("match")
-        ]
-
-        if matches:
-            ranked = sorted(
-                matches,
-                key=lambda x: x[1]["match"]["score"],
-                reverse=True
+            st.write(
+                f"📄 {file.name}"
             )
 
-            st.markdown("### 🏆 Candidate Ranking")
+        if st.button(
+            "Process Resumes",
+            type="primary",
+            use_container_width=True
+        ):
 
-            for rank, (name, data) in enumerate(ranked, 1):
+            with st.spinner(
+                "Processing resumes and creating AI search index..."
+            ):
 
-                match = data["match"]
-                score = match["score"]
+                success = process_resumes(
+                    uploaded_files
+                )
+
+            if success:
+
+                st.success(
+                    "Resumes processed successfully!"
+                )
+
+                st.rerun()
+
+    if st.session_state.processed_files:
+
+        st.markdown(
+            '<div class="section-title">Loaded Resumes</div>',
+            unsafe_allow_html=True
+        )
+
+        for filename in st.session_state.processed_files:
+
+            candidate = st.session_state.resume_texts.get(
+                filename,
+                ""
+            )
+
+            name = extract_candidate_name(
+                candidate,
+                filename
+            )
+
+            skills = extract_skills(candidate)
+
+            with st.expander(
+                f"📄 {name} — {filename}"
+            ):
+
+                st.write(
+                    f"**Detected skills:** "
+                    f"{', '.join(skills) if skills else 'None detected'}"
+                )
+
+                st.write(
+                    f"**Characters:** {len(candidate):,}"
+                )
+
+
+# ============================================================
+# JOB MATCH
+# ============================================================
+
+elif page == "Job Match":
+
+    st.markdown(
+        '<div class="section-title">Job Match</div>',
+        unsafe_allow_html=True
+    )
+
+    if not st.session_state.resume_texts:
+
+        st.info(
+            "Upload resumes first from the Upload Resumes page."
+        )
+
+    else:
+
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    🎯 Job Description
+                </div>
+                <div class="card-text">
+                    Paste the job description below to compare
+                    candidate resumes with the required skills.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        job_description = st.text_area(
+            "Paste Job Description",
+            value=st.session_state.job_description,
+            height=250,
+            placeholder=(
+                "Example: We are looking for a Python developer "
+                "with SQL, Git, AWS and machine learning experience..."
+            )
+        )
+
+        st.session_state.job_description = job_description
+
+        if st.button(
+            "Analyze Job Match",
+            type="primary",
+            use_container_width=True
+        ):
+
+            if not job_description.strip():
+
+                st.warning(
+                    "Please enter a job description."
+                )
+
+            else:
+
+                results = []
+
+                for filename, resume_text in (
+                    st.session_state.resume_texts.items()
+                ):
+
+                    result = calculate_match(
+                        resume_text,
+                        job_description
+                    )
+
+                    candidate_name = extract_candidate_name(
+                        resume_text,
+                        filename
+                    )
+
+                    result["name"] = candidate_name
+                    result["filename"] = filename
+                    result["resume_text"] = resume_text
+
+                    results.append(result)
+
+                results.sort(
+                    key=lambda x: x["score"],
+                    reverse=True
+                )
+
+                st.session_state.match_results = results
+
+        if "match_results" in st.session_state:
+
+            results = st.session_state.match_results
+
+            st.markdown(
+                '<div class="section-title">Match Results</div>',
+                unsafe_allow_html=True
+            )
+
+            for index, result in enumerate(results):
 
                 st.markdown(
                     f"""
-                    <div class="candidate">
+                    <div class="card">
                         <div class="candidate-name">
-                            #{rank} {name}
+                            #{index + 1} {result["name"]}
                         </div>
-                        <div class="small">{match.get("recommendation", "")}</div>
-                        <br>
-                        <div class="score">{score}%</div>
-                        <div class="small">AI-assisted job match score</div>
+
+                        <div class="candidate-score">
+                            {result["score"]}%
+                        </div>
+
+                        <p>
+                            <b>Matched skills:</b>
+                            {", ".join(result["matched"])
+                            if result["matched"]
+                            else "None detected"}
+                        </p>
+
+                        <p>
+                            <b>Missing skills:</b>
+                            {", ".join(result["missing"])
+                            if result["missing"]
+                            else "None"}
+                        </p>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-                col1, col2 = st.columns(2)
 
-                with col1:
-                    st.markdown("**Matched Skills**")
-                    for skill in match.get("matched_skills", []):
-                        st.markdown(
-                            f'<span class="skill">✓ {skill}</span>',
-                            unsafe_allow_html=True
-                        )
-
-                with col2:
-                    st.markdown("**Skill Gaps**")
-                    for skill in match.get("missing_skills", []):
-                        st.markdown(
-                            f'<span class="skill">＋ {skill}</span>',
-                            unsafe_allow_html=True
-                        )
-
-                with st.expander("Why this score?"):
-                    st.write(match.get("explanation", "No explanation available."))
-
-                    if match.get("strengths"):
-                        st.markdown("**Strengths**")
-                        for item in match["strengths"]:
-                            st.write("•", item)
-
-                    if match.get("gaps"):
-                        st.markdown("**Gaps**")
-                        for item in match["gaps"]:
-                            st.write("•", item)
-
-
-# =========================================================
+# ============================================================
 # COMPARE CANDIDATES
-# =========================================================
+# ============================================================
+
 elif page == "Compare Candidates":
 
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">⚖️ Candidate Comparison</div>
-        <div class="card-sub">
-            Compare two candidates side-by-side using their extracted profiles and match analysis.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-title">Compare Candidates</div>',
+        unsafe_allow_html=True
+    )
 
-    names = list(st.session_state.candidate_data.keys())
+    if not st.session_state.resume_texts:
 
-    if len(names) < 2:
-        st.warning("Upload at least two resumes to use candidate comparison.")
+        st.info(
+            "Upload resumes first."
+        )
+
     else:
-        col1, col2 = st.columns(2)
 
-        with col1:
-            candidate_a = st.selectbox("Candidate A", names, index=0)
+        filenames = list(
+            st.session_state.resume_texts.keys()
+        )
 
-        with col2:
-            candidate_b = st.selectbox(
-                "Candidate B",
-                names,
-                index=1 if len(names) > 1 else 0
+        selected = st.multiselect(
+            "Select candidates to compare",
+            filenames,
+            default=filenames[:2]
+        )
+
+        if selected:
+
+            comparison_data = []
+
+            for filename in selected:
+
+                text = st.session_state.resume_texts[
+                    filename
+                ]
+
+                name = extract_candidate_name(
+                    text,
+                    filename
+                )
+
+                skills = extract_skills(text)
+
+                comparison_data.append(
+                    {
+                        "Candidate": name,
+                        "Resume": filename,
+                        "Skills": len(skills),
+                        "Skill List": ", ".join(skills),
+                    }
+                )
+
+            st.dataframe(
+                comparison_data,
+                use_container_width=True,
+                hide_index=True
             )
 
-        if candidate_a == candidate_b:
-            st.warning("Please select two different candidates.")
-        else:
-            a = st.session_state.candidate_data[candidate_a]
-            b = st.session_state.candidate_data[candidate_b]
+            st.markdown(
+                '<div class="section-title">Candidate Profiles</div>',
+                unsafe_allow_html=True
+            )
 
-            ca, cb = st.columns(2)
+            columns = st.columns(
+                min(len(selected), 3)
+            )
 
-            for column, name, data in [
-                (ca, candidate_a, a),
-                (cb, candidate_b, b)
-            ]:
-                with column:
-                    profile = data["profile"]
-                    match = data.get("match") or {}
+            for index, filename in enumerate(selected):
+
+                text = st.session_state.resume_texts[
+                    filename
+                ]
+
+                name = extract_candidate_name(
+                    text,
+                    filename
+                )
+
+                skills = extract_skills(text)
+
+                with columns[index % len(columns)]:
 
                     st.markdown(
-                        f'<div class="candidate">'
-                        f'<div class="candidate-name">{name}</div>'
-                        f'<p>{profile.get("summary", "")}</p>'
-                        f'<hr>',
+                        f"""
+                        <div class="card">
+                            <div class="candidate-name">
+                                {name}
+                            </div>
+
+                            <p>
+                                <b>Resume:</b><br>
+                                {filename}
+                            </p>
+
+                            <p>
+                                <b>Skills:</b><br>
+                                {", ".join(skills)
+                                if skills
+                                else "No common skills detected"}
+                            </p>
+
+                            <p>
+                                <b>Skill Count:</b>
+                                {len(skills)}
+                            </p>
+                        </div>
+                        """,
                         unsafe_allow_html=True
                     )
 
-                    if match:
-                        st.markdown(
-                            f'<div class="score">{match.get("score", 0)}%</div>'
-                            f'<div class="small">Job Match</div>',
-                            unsafe_allow_html=True
-                        )
 
-                    st.markdown("**Skills**")
-                    for skill in profile.get("skills", []):
-                        st.markdown(
-                            f'<span class="skill">{skill}</span>',
-                            unsafe_allow_html=True
-                        )
+# ============================================================
+# AI RESUME CHAT
+# ============================================================
 
-                    st.markdown("**Strengths**")
-                    for item in profile.get("strengths", []):
-                        st.write("•", item)
-
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# =========================================================
-# AI CHAT
-# =========================================================
 elif page == "AI Resume Chat":
 
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">💬 Ask Your Resumes</div>
-        <div class="card-sub">
-            Ask natural-language questions and retrieve information from the uploaded resumes.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-title">AI Resume Chat</div>',
+        unsafe_allow_html=True
+    )
 
-    if st.session_state.qa_chain is None:
-        st.info("Upload and process resumes first.")
+    if not st.session_state.vectorstore:
+
+        st.markdown(
+            """
+            <div class="info-box">
+                📄 Upload and process resumes first.
+                After that you can ask questions about
+                the resume content.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     else:
 
-        examples = [
-            "Who has customer service experience?",
-            "Which candidate has strong communication skills?",
-            "Find candidates with leadership experience.",
-            "Which resume mentions Python?",
-        ]
-
-        selected = st.selectbox(
-            "Quick questions",
-            ["Choose a question..."] + examples
+        st.markdown(
+            """
+            <div class="card">
+                <div class="card-title">
+                    🤖 Ask questions about your resumes
+                </div>
+                <div class="card-text">
+                    ResumeAI uses Retrieval-Augmented Generation
+                    to retrieve relevant resume content before
+                    generating an answer.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        question = st.text_input(
-            "Your question",
-            value="" if selected == "Choose a question..." else selected,
-            placeholder="Ask anything about the uploaded resumes..."
-        )
+        # Previous messages
+        for message in st.session_state.chat_history:
 
-        if st.button("🔎 Search Resumes", use_container_width=True):
-            if question.strip():
-                with st.spinner("Searching resumes..."):
-                    result = st.session_state.qa_chain.invoke(
-                        {"query": question}
-                    )
+            if message["role"] == "user":
 
-                st.markdown("### AI Response")
                 st.markdown(
-                    f'<div class="card">{result.get("result", "")}</div>',
+                    f"""
+                    <div class="chat-user">
+                        <b>You</b><br>
+                        {message["content"]}
+                    </div>
+                    """,
                     unsafe_allow_html=True
                 )
 
+            else:
 
-# =========================================================
+                st.markdown(
+                    f"""
+                    <div class="chat-ai">
+                        <b>ResumeAI</b><br>
+                        {message["content"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        question = st.chat_input(
+            "Ask something about the uploaded resumes..."
+        )
+
+        if question:
+
+            st.session_state.chat_history.append(
+                {
+                    "role": "user",
+                    "content": question,
+                }
+            )
+
+            with st.spinner(
+                "Searching resumes and generating answer..."
+            ):
+
+                answer = ask_resume_question(
+                    question
+                )
+
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": answer,
+                }
+            )
+
+            st.rerun()
+
+        if st.button(
+            "Clear Chat",
+            use_container_width=True
+        ):
+
+            st.session_state.chat_history = []
+
+            st.rerun()
+
+
+# ============================================================
 # FOOTER
-# =========================================================
+# ============================================================
+
 st.markdown(
-    '<div class="footer">ResumeAI • RAG • FAISS • HuggingFace Embeddings • Gemini</div>',
+    """
+    <div style="
+        text-align:center;
+        color:#94a3b8;
+        font-size:12px;
+        padding:30px 0 10px 0;
+    ">
+        ResumeAI • RAG-powered Resume Intelligence
+    </div>
+    """,
     unsafe_allow_html=True
 )
